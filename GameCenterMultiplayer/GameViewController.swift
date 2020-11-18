@@ -32,8 +32,14 @@ class GameViewController: UIViewController {
         gameModel = GameModel()
         match?.delegate = self
         
+        //Mirror player 2 images
         player2.transform = CGAffineTransform(scaleX: -1, y: 1)
+        
         savePlayers()
+        
+        if getLocalPlayerType() == .one, timer == nil {
+            self.initTimer()
+        }
     }
     
     private func initTimer() {
@@ -48,7 +54,6 @@ class GameViewController: UIViewController {
     
     private func savePlayers() {
         guard let player2Name = match?.players.first?.displayName else { return }
-        
         let player1 = Player(displayName: GKLocalPlayer.local.displayName)
         let player2 = Player(displayName: player2Name)
         
@@ -85,11 +90,13 @@ class GameViewController: UIViewController {
     @IBAction func buttonAttackPressed() {
         let localPlayer = getLocalPlayerType()
         
+        //Change status to attacking
         gameModel.players[localPlayer.index()].status = .attack
         gameModel.players[localPlayer.enemyIndex()].status = .hit
         gameModel.players[localPlayer.enemyIndex()].life -= 10
         sendData()
         
+        //Reset status after 1 second
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             self.gameModel.players[localPlayer.index()].status = .idle
             self.gameModel.players[localPlayer.enemyIndex()].status = .idle
@@ -112,11 +119,6 @@ class GameViewController: UIViewController {
 extension GameViewController: GKMatchDelegate {
     func match(_ match: GKMatch, didReceive data: Data, fromRemotePlayer player: GKPlayer) {
         guard let model = GameModel.decode(data: data) else { return }
-        
-        if getLocalPlayerType() == .one, timer == nil {
-            self.initTimer()
-        }
-        
         gameModel = model
     }
 }
